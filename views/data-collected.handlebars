@@ -1,0 +1,134 @@
+{{!-- Extend the main layout --}}
+{{#> main}}
+<div class="container mx-auto mt-10">
+  <div class="flex justify-center">
+    <div class="w-full max-w-5xl">
+      <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="device">
+          Select Device
+        </label>
+        <div class="relative">
+          <select id="device" class="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+            {{#each devices}}
+              <option value="{{this.id}}">{{this.name}}</option>
+            {{/each}}
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="data-table" class="overflow-x-auto mt-10">
+    <!-- Data table will be populated here -->
+  </div>
+
+  <div id="pagination" class="flex justify-between items-center mt-4">
+    <div id="page-info" class="text-gray-600 text-sm"></div>
+    <div id="pagination-controls" class="flex"></div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const deviceSelect = document.getElementById('device');
+    deviceSelect.addEventListener('change', async () => {
+      const deviceId = deviceSelect.value;
+      await fetchDataCollected(deviceId, 1);
+    });
+
+    // Fetch data for the initially selected device
+    if (deviceSelect.options.length > 0) {
+      const initialDeviceId = deviceSelect.options[0].value;
+      await fetchDataCollected(initialDeviceId, 1);
+    }
+  });
+
+  async function fetchDataCollected(deviceId, page) {
+    const dataTable = document.getElementById('data-table');
+    const paginationControls = document.getElementById('pagination-controls');
+    const pageInfo = document.getElementById('page-info');
+    const itemsPerPage = 10;
+
+    try {
+      console.log(`Fetching data for device ID: ${deviceId}, Page: ${page}`);
+      const response = await fetch(`/sensordata/${deviceId}/all`);
+      console.log('Response:', response);
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      console.log('Fetched data:', data);
+
+      if (data && data.length > 0) {
+        const totalItems = data.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedData = data.slice(startIndex, endIndex);
+
+        let tableContent = `
+          <table class="min-w-full leading-normal border-collapse border border-gray-200">
+            <thead>
+              <tr>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NO2</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">CO2</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NH3</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Humidity</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Temperature</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        paginatedData.forEach((row) => {
+          tableContent += `
+            <tr>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${row.NO2}</td>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${row.CO2}</td>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${row.NH3}</td>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${row.humidity}</td>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${row.temperature}</td>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${new Date(row.createdAt).toLocaleString()}</td>
+            </tr>
+          `;
+        });
+        tableContent += `
+            </tbody>
+          </table>
+        `;
+        dataTable.innerHTML = tableContent;
+
+        let paginationContent = `
+          <button onclick="fetchDataCollected('${deviceId}', ${page > 1 ? page - 1 : 1})" class="mx-1 px-3 py-1 border ${page === 1 ? 'bg-gray-300 text-gray-500' : 'bg-white text-blue-500'} rounded" ${page === 1 ? 'disabled' : ''}>&laquo;</button>
+        `;
+        for (let i = 1; i <= totalPages; i++) {
+          paginationContent += `
+            <button onclick="fetchDataCollected('${deviceId}', ${i})" class="mx-1 px-3 py-1 border ${i === page ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'} rounded">${i}</button>
+          `;
+        }
+        paginationContent += `
+          <button onclick="fetchDataCollected('${deviceId}', ${page < totalPages ? page + 1 : totalPages})" class="mx-1 px-3 py-1 border ${page === totalPages ? 'bg-gray-300 text-gray-500' : 'bg-white text-blue-500'} rounded" ${page === totalPages ? 'disabled' : ''}>&raquo;</button>
+        `;
+        paginationControls.innerHTML = paginationContent;
+
+        pageInfo.textContent = `Showing ${startIndex + 1} to ${endIndex > totalItems ? totalItems : endIndex} of ${totalItems} results`;
+      } else {
+        dataTable.innerHTML = `<p>No data available for the selected device.</p>`;
+        paginationControls.innerHTML = '';
+        pageInfo.textContent = '';
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      dataTable.innerHTML = `<p>Error fetching data. Please try again later.</p>`;
+      paginationControls.innerHTML = '';
+      pageInfo.textContent = '';
+    }
+  }
+</script>
+{{/main}}

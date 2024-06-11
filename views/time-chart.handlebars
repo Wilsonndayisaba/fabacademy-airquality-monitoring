@@ -29,7 +29,7 @@
   document.addEventListener('DOMContentLoaded', async () => {
     const deviceSelect = document.getElementById('device');
     const chartContainer = document.getElementById('chart-container');
-    const ctx = document.getElementById('myChart').getContext('2d');
+    let ctx = document.getElementById('myChart').getContext('2d');
 
     if (deviceSelect.options.length > 0) {
       const deviceId = deviceSelect.options[0].value;
@@ -44,11 +44,12 @@
 
     async function fetchTimeChart(deviceId) {
       try {
-        console.log(`Fetching time chart data for device ID: ${deviceId}`);
-        const response = await fetch(`/sensordata/${deviceId}/all`);
+        console.log(Fetching time chart data for device ID: ${deviceId});
+        const response = await fetch(/sensordata/${deviceId}/all);
         const data = await response.json();
         console.log('Fetched data:', data);
 
+        // Check if data is empty
         if (data && data.length > 0) {
           // Clear previous chart content
           if (chartInstance) {
@@ -56,7 +57,7 @@
           }
 
           // Process data for Chart.js
-          const labels = data.map(d => new Date(d.createdAt).toLocaleString());
+          const labels = data.map(d => new Date(d.createdAt));
           const no2 = data.map(d => d.NO2);
           const co2 = data.map(d => d.CO2);
           const nh3 = data.map(d => d.NH3);
@@ -73,6 +74,10 @@
           ].filter(dataset => dataset.data.length > 0);
 
           if (datasets.length > 0) {
+            // Reset chart container and canvas
+            chartContainer.innerHTML = '<canvas id="myChart"></canvas>';
+            ctx = document.getElementById('myChart').getContext('2d');
+
             // Create a new chart
             chartInstance = new Chart(ctx, {
               type: 'line',
@@ -103,15 +108,22 @@
               }
             });
           } else {
-            chartContainer.innerHTML = `<p>No data available for the selected device.</p>`;
+            displayNoDataMessage('No data available for the selected device.');
           }
         } else {
-          chartContainer.innerHTML = `<p>No data available for the selected device.</p>`;
+          displayNoDataMessage('No data available for the selected device.');
         }
       } catch (error) {
         console.error('Error fetching data:', error);
-        chartContainer.innerHTML = `<p>Error fetching data. Please try again later.</p>`;
+        displayNoDataMessage('Error fetching data. Please try again later.');
       }
+    }
+
+    function displayNoDataMessage(message) {
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+      chartContainer.innerHTML = <p>${message}</p>;
     }
   });
 </script>

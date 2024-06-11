@@ -43,7 +43,7 @@
 
   async function fetchLatestData(deviceId) {
     try {
-      const response = await fetch(`/sensordata/${deviceId}/latest`);
+      const response = await fetch(/sensordata/${deviceId}/latest);
       const data = await response.json();
       console.log(data); // Log data for debugging
 
@@ -53,40 +53,40 @@
           <div class="bg-white shadow-md rounded-lg p-6 text-center">
             <p class="text-gray-500">NO2</p>
             <p class="text-3xl font-bold">${data.NO2}</p>
-            <p class="text-sm text-green-500">up 5%</p>
-            <p class="text-xs text-gray-500">vs previous 30 days</p>
+            
+            
           </div>
           <div class="bg-white shadow-md rounded-lg p-6 text-center">
             <p class="text-gray-500">CO2</p>
             <p class="text-3xl font-bold">${data.CO2}</p>
-            <p class="text-sm text-green-500">up 8%</p>
-            <p class="text-xs text-gray-500">vs previous 30 days</p>
+            
+            
           </div>
           <div class="bg-white shadow-md rounded-lg p-6 text-center">
             <p class="text-gray-500">NH3</p>
             <p class="text-3xl font-bold">${data.NH3}</p>
-            <p class="text-sm text-green-500">up 3%</p>
-            <p class="text-xs text-gray-500">vs previous 30 days</p>
+            
+            
           </div>
           <div class="bg-white shadow-md rounded-lg p-6 text-center">
             <p class="text-gray-500">Humidity</p>
             <p class="text-3xl font-bold">${data.humidity}</p>
-            <p class="text-sm text-green-500">up 2%</p>
-            <p class="text-xs text-gray-500">vs previous 30 days</p>
+            
+            
           </div>
           <div class="bg-white shadow-md rounded-lg p-6 text-center">
             <p class="text-gray-500">Temperature</p>
             <p class="text-3xl font-bold">${data.temperature}</p>
-            <p class="text-sm text-green-500">up 1%</p>
-            <p class="text-xs text-gray-500">vs previous 30 days</p>
+            
+            
           </div>
         `;
       } else {
-        dataCards.innerHTML = `<p>No data available for the selected device.</p>`;
+        dataCards.innerHTML = <p>No data available for the selected device.</p>;
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      dataCards.innerHTML = `<p>Error fetching data. Please try again later.</p>`;
+      dataCards.innerHTML = <p>Error fetching data. Please try again later.</p>;
     }
   }
 </script>
